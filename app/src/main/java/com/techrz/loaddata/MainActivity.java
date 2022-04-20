@@ -18,13 +18,17 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private GridView gridView;
-    private String URL = "https://muthosoft.com/univ/photos/";
+    customCourseAdapter customCourseAdapter;
+    ArrayList<courseArrayList> arrayList;
+
+    private String URL = "https://muthosoft.com/univ/attendance/report.php";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         gridView = findViewById(R.id.gridView);
+        arrayList = new ArrayList<>();
 
         String[] keys = {"my_courses", "sid"};
         String[] values = {"true", "2019160036"};
@@ -32,34 +36,39 @@ public class MainActivity extends Activity {
     }
     @SuppressLint("StaticFieldLeak")
     private void httpRequest(final String keys[], final String values[]){
-        new AsyncTask<Void, Void, String>(){
+        new AsyncTask<Void, Void, ArrayList>(){
             @Override
-            protected String doInBackground(Void... param){
+            protected ArrayList<courseArrayList> doInBackground(Void... param){
                 try{
                     List<NameValuePair> params = new ArrayList<NameValuePair>();
                     for(int i=0; i<keys.length; i++){
                         params.add(new BasicNameValuePair(keys[i], values[i]));
                     }
+
                     String data = JSONParser.getInstance().makeHttpRequest(URL, "POST", params);
-                    return data;
+                    ArrayList<courseArrayList> arrayList = new ArrayList<>();
+                    courseArrayList courseArrayList = new courseArrayList(data);
+                    arrayList.add(courseArrayList);
+
+                    return arrayList;
                 }catch (Exception ex){
                     ex.printStackTrace();
                 }
                 return null;
             }
-            @Override
-            protected void onPostExecute(String data){
 
-                if(data!=null){
-                    try{
-                        System.out.println(data);
-                        //webView.loadDataWithBaseURL(null, data, "text/html", "UTF-8",  null);
-                    }
-                    catch(Exception ex){
-                        ex.printStackTrace();
-                    }
-                }
+            @Override
+            protected void onPostExecute(ArrayList arrayList) {
+                super.onPostExecute(arrayList);
+                loadData(arrayList);
             }
         }.execute();
+    }
+    void loadData(ArrayList arrayList){
+        //System.out.println(arrayList.size());
+        customCourseAdapter = new customCourseAdapter(this,arrayList);
+        gridView.setAdapter(customCourseAdapter);
+        customCourseAdapter.notifyDataSetChanged();
+
     }
 }
